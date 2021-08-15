@@ -2,20 +2,15 @@ import { S3Client, GetObjectCommand, GetObjectCommandOutput } from "@aws-sdk/cli
 
 const fs = require("fs");
 
-const getImage = async ({bucket, path}: {
-    bucket: string,
-    path: string,
-}): Promise<GetObjectCommandOutput> => {
+type GetObjectInput = { Bucket: string, Key: string };
+type GetImage = (args: GetObjectInput) => Promise<GetObjectCommandOutput>
+const getImage: GetImage = async (args) => {
     const client = new S3Client({region: "ap-northeast-1"});
-    const data = await client.send(new GetObjectCommand({
-        Bucket: bucket,
-        Key: path,
-      }))
-
-    return data
+    return await client.send(new GetObjectCommand(args))
 }
 
-const writeImage = async (buffer: Buffer): Promise<void> => {
+type WriteImage = (buffer: Buffer) => Promise<void>
+const writeImage: WriteImage = async (buffer) => {
     const writer = fs.createWriteStream("2017080701000265900017011.jpeg")
     writer.on("finish", () => {
         console.log("success");
@@ -24,7 +19,8 @@ const writeImage = async (buffer: Buffer): Promise<void> => {
     writer.end();
 }
 
-const streamToBuffer = (stream): Promise<Buffer> =>
+type StreamToBuffer = (stream) => Promise<Buffer>
+const streamToBuffer: StreamToBuffer = (stream) =>
   new Promise((resolve, reject) => {
     const chunks = [];
     stream.on('data', (chunk) => chunks.push(chunk));
@@ -35,8 +31,8 @@ const streamToBuffer = (stream): Promise<Buffer> =>
 const main = async (): Promise<void> => {
     // s3から画像を取得する
     const data = await getImage({
-        bucket: process.env.BUCKET,
-        path: "2017080701000265900017011.jpeg"
+        Bucket: process.env.BUCKET,
+        Key: "2017080701000265900017011.jpeg"
     });
 
     // 画像を生成する
